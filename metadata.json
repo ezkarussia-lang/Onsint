@@ -1,0 +1,6 @@
+{
+  "name": "Anipriv8",
+  "description": "#1 Anime Streaming Site",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
