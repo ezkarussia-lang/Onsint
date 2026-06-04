@@ -600,11 +600,24 @@ export default function Watch({ animeId, onBack, onSelectAnime }: WatchProps) {
 
           {/* Custom Player module */}
           <div className="relative">
-            {loadingStreams || resolvingM3u8 || !playableUrl ? (
+            {resolveError || errorStreams ? (
+              <div className="w-full aspect-video bg-black flex flex-col items-center justify-center gap-3 px-4 text-center">
+                <span className="text-red-500 font-bold uppercase tracking-widest text-[11px] mb-2">STREAM FAILED</span>
+                <span className="text-zinc-400 font-medium text-sm">
+                  {resolveError || errorStreams}
+                </span>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="mt-4 px-4 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold uppercase tracking-widest rounded transition-colors"
+                >
+                  RELOAD
+                </button>
+              </div>
+            ) : loadingStreams || resolvingM3u8 || !playableUrl ? (
               <div className="w-full aspect-video bg-black flex flex-col items-center justify-center gap-3">
                 <Loader2 className="w-10 h-10 text-red-600 animate-spin" />
                 <span className="text-zinc-500 font-bold uppercase tracking-widest text-[9px]">
-                  {loadingStreams ? 'INTERSECTING PROVIDER CHANNELS...' : 'DECRYPTING KWIK STREAM SEED...'}
+                  {loadingStreams ? 'CONNECTING TO SERVERS...' : 'INITIALIZING VIDEO PLAYER...'}
                 </span>
               </div>
             ) : (

@@ -81,7 +81,28 @@ export default function VideoPlayer({ url, type, subtitles, intro, outro, onEpis
       isHlsStream = true;
     }
 
-    if (Hls.isSupported() && isHlsStream) {
+    const canPlayNativeHls = video.canPlayType('application/vnd.apple.mpegurl');
+    
+    // Always prefer Native HLS over hls.js if the browser natively supports it.
+    // Native HLS bypasses fetch CORS policies (which block hls.js) and optimizes battery on mobile devices.
+    if (canPlayNativeHls && isHlsStream) {
+      video.src = url;
+      
+      const onCanPlay = () => playVideoSafely();
+      const onVideoError = () => {
+        const err = video.error;
+        console.error('Native video play error:', err);
+        onErrorRef.current?.(err?.message || 'Native video playback channel offline.');
+      };
+
+      video.addEventListener('canplay', onCanPlay);
+      video.addEventListener('error', onVideoError);
+
+      return () => {
+        video.removeEventListener('canplay', onCanPlay);
+        video.removeEventListener('error', onVideoError);
+      };
+    } else if (Hls.isSupported() && isHlsStream) {
       hls = new Hls({
         enableWorker: true,
         lowLatencyMode: true,
@@ -107,9 +128,9 @@ export default function VideoPlayer({ url, type, subtitles, intro, outro, onEpis
                 break;
               }
               
-              if (retryCount < 3) {
+              if (retryCount < 0) { // Disabled retries for faster failover to working servers
                 retryCount++;
-                console.warn(`HLS network error, retrying (${retryCount}/3)...`);
+                console.warn(`HLS network error, retrying (${retryCount}/1)...`);
                 hls?.startLoad();
               } else {
                 console.error('HLS terminal network failure.');

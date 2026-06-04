@@ -119,271 +119,68 @@ app.use((req, res, next) => {
         return res.status(400).json({ error: "Missing watchId parameter" });
       }
 
-      console.log(`[Anivexa] Resolving multi-provider streams for target watchId: ${watchId}...`);
+      console.log(`[Anivexa] Resolving simple multi-provider streams for: ${watchId}`);
       
       const parts = watchId.split("/");
       if (parts.length < 5) {
-        return res.status(400).json({ error: "Malformed watchId" });
+        return res.status(400).json({ error: "Invalid watchId format" });
       }
 
-      const anilistId = Number(parts[2]);
-      const category = parts[3] as "sub" | "dub";
-      const epNumStr = parts[4];
-      const epNum = parseFloat(epNumStr);
-
-      // 1. Fetch step 1 consolidated provider maps from Anivexa-API
-      const mapsUrl = `http://217.60.252.213:4000/episodes/${anilistId}`;
-      const mapsRes = await fetchWithTimeout(mapsUrl, {
-        headers: { "Accept": "application/json" }
-      }, 15000);
-
-      if (!mapsRes.ok) {
-        throw new Error(`Anivexa-API episode maps query failed with status: ${mapsRes.status}`);
+      // Format is e.g. watch/anineko/153518/sub/anineko-5
+      const anilistId = parts[2];
+      const category = parts[3] || "sub";
+      const episodeFull = parts[4];
+      const epNumMatch = episodeFull.match(/(\d+)$/);
+      let epNum = "1";
+      if (epNumMatch) {
+         epNum = epNumMatch[1];
       }
 
-      const mapsData = await mapsRes.json();
-      
-      let resolvedCategory: "sub" | "dub" = category;
-      let resolvedEpNum: number = epNum;
-      let idFound = false;
+      const fetchUrls = [
+         `http://217.60.252.213:4000/watch/anineko/${anilistId}/${category}/anineko-${epNum}`,
+         `http://217.60.252.213:4000/watch/anidbapp/${anilistId}/${category}/anidbapp-${epNum}`
+      ];
 
-      if (mapsData && typeof mapsData === "object") {
-        for (const [providerId, providerData] of Object.entries(mapsData)) {
-          const typedProviderData = providerData as any;
-          if (typedProviderData?.episodes) {
-            if (Array.isArray(typedProviderData.episodes.sub)) {
-              const matched = typedProviderData.episodes.sub.find((e: any) => e.id === watchId);
-              if (matched) {
-                resolvedCategory = "sub";
-                resolvedEpNum = parseFloat(matched.number);
-                idFound = true;
-                break;
-              }
-            }
-            if (Array.isArray(typedProviderData.episodes.dub)) {
-              const matched = typedProviderData.episodes.dub.find((e: any) => e.id === watchId);
-              if (matched) {
-                resolvedCategory = "dub";
-                resolvedEpNum = parseFloat(matched.number);
-                idFound = true;
-                break;
-              }
-            }
-          }
-        }
-      }
-
-      if (!idFound || isNaN(resolvedEpNum)) {
-        const trailingDigitsMatch = epNumStr.match(/\d+$/);
-        if (trailingDigitsMatch) {
-          resolvedEpNum = parseFloat(trailingDigitsMatch[0]);
-        }
-      }
-
-      if (isNaN(resolvedEpNum)) {
-        resolvedEpNum = 1;
-      }
-
-      interface ProviderMatch {
-        providerId: string;
-        episodeId: string;
-      }
-      const matches: ProviderMatch[] = [];
-
-      if (mapsData && typeof mapsData === "object") {
-        for (const [providerId, providerData] of Object.entries(mapsData)) {
-          const typedProviderData = providerData as any;
-          if (typedProviderData?.episodes) {
-            const epList = typedProviderData.episodes[resolvedCategory] || [];
-            if (Array.isArray(epList)) {
-              const matchedEp = epList.find((e: any) => {
-                const itemNum = parseFloat(e.number);
-                return !isNaN(itemNum) && itemNum === resolvedEpNum;
-              });
-              if (matchedEp && matchedEp.id) {
-                matches.push({
-                  providerId,
-                  episodeId: matchedEp.id
-                });
-              }
-            }
-          }
-        }
-      }
-
-      console.log(`[Anivexa] Found ${matches.length} matching providers for Ep ${resolvedEpNum}`);
+      const fetchPromises = fetchUrls.map(url => fetch(url, { headers: { "Accept": "application/json" } }).then(r => r.json()).catch(()=>null));
+      const results = await Promise.all(fetchPromises);
 
       const allFetchedStreams: any[] = [];
       const aggregatedSubtitles: any[] = [];
-      let finalIntro: any = null;
-      let finalOutro: any = null;
-
-      // 3. Pull streaming playlists from Step-2 endpoints
-      const fetchPromises = matches.map(async (m) => {
-        const resultStreams: any[] = [];
-        try {
-          const sourceUrl = `http://217.60.252.213:4000/${m.episodeId}`;
-          console.log(`[Anivexa] Fetching streaming payload from: ${sourceUrl}`);
-          const sourceRes = await fetchWithTimeout(sourceUrl, {
-            headers: { "Accept": "application/json" }
-          }, 15000);
-
-          if (sourceRes && sourceRes.ok) {
-            const resData = await sourceRes.json();
-            const rawStreams = Array.isArray(resData.sources) 
-              ? resData.sources 
-              : Array.isArray(resData.streams) 
-                ? resData.streams 
-                : [];
-            
-            console.log(`[Anivexa] ${m.providerId} returned ${rawStreams.length} raw streams.`);
-            
-            const defaultReferer = resData.headers?.Referer || resData.headers?.referer || "";
-            const defaultUA = resData.headers?.["User-Agent"] || resData.headers?.["user-agent"] || "";
-
-            rawStreams.forEach((stream: any) => {
-              if (stream.isActive === false && !stream.extractedUrl) return; // Ignore streams explicitly marked inactive unless they have extractedUrl
-              
-              const streamUrl = stream.extractedUrl || stream.url;
-              if (!streamUrl) return;
-
-              resultStreams.push({
-                ...stream,
-                url: streamUrl,
-                type: stream.extractedType || stream.type,
-                providerId: m.providerId,
-                referer: stream.referer || defaultReferer,
-                userAgent: stream.userAgent || defaultUA,
-                translationType: resolvedCategory 
-              });
-            });
-            
-            if (resData && Array.isArray(resData.subtitles)) {
-              resData.subtitles.forEach((sub: any) => {
-                if (!aggregatedSubtitles.some(s => s.url === sub.url)) {
-                  aggregatedSubtitles.push(sub);
+      
+      for (const data of results) {
+        if (data && data.streams) {
+            data.streams.forEach((s: any) => {
+                const url = s.url || s.extractedUrl;
+                if (!url) return;
+                const rawType = s.extractedType || s.type || (url.toLowerCase().includes(".mp4") ? "mp4" : "hls");
+                if (rawType === "embed" || rawType === "iframe" || rawType === "player" || url.includes("/embed/") || url.includes("/e/")) {
+                    return;
                 }
-              });
-            }
-            if (resData?.intro && !finalIntro) finalIntro = resData.intro;
-            if (resData?.outro && !finalOutro) finalOutro = resData.outro;
-          }
-        } catch (err: any) {
-          console.error(`[Anivexa Warning] Failed stream playlists resolution for ${m.providerId}:`, err.message);
-        }
-        return resultStreams;
-      });
-
-      const fetchResults = await Promise.allSettled(fetchPromises);
-      fetchResults.forEach(res => {
-        if (res.status === 'fulfilled' && res.value) {
-          allFetchedStreams.push(...res.value);
-        }
-      });
-
-      // Fallback checks
-      if (allFetchedStreams.length === 0) {
-        console.warn(`[Anivexa Sources] Zero premium streams fetched. Activating fallback pool...`);
-        const anifyHosts = ["https://api.anify.nz", "https://api.anify.tv"];
-        for (const host of anifyHosts) {
-          try {
-            const anifyUrl = `${host}/sources?id=${anilistId}&episodeNumber=${resolvedEpNum}&providerId=gogoanime&subType=${resolvedCategory}`;
-            const anifyRes = await fetchWithTimeout(anifyUrl, { headers: { "Accept": "application/json" } }, 6000);
-            if (anifyRes.ok) {
-              const anifyData = await anifyRes.json() as any;
-              if (anifyData && Array.isArray(anifyData.sources)) {
-                anifyData.sources.forEach((s: any) => {
-                  allFetchedStreams.push({
-                    url: s.url,
-                    type: s.url.includes(".m3u8") ? "hls" : "mp4",
-                    quality: s.quality || "720p",
-                    providerId: "gogoanime",
-                    server: "Public Stream",
-                    translationType: resolvedCategory
-                  });
+                allFetchedStreams.push({
+                    url: url,
+                    type: rawType,
+                    server: s.server || "Direct",
+                    translationType: category
                 });
-                break;
-              }
-            }
-          } catch (anifyErr) {
-            console.error(`[Fallback Error] Anify pipeline down:`, anifyErr);
-          }
+            });
+        }
+        if (data && Array.isArray(data.subtitles)) {
+            data.subtitles.forEach((sub: any) => {
+                if (!aggregatedSubtitles.some(x => x.url === sub.url)) {
+                    aggregatedSubtitles.push(sub);
+                }
+            });
         }
       }
 
-      // 4. Final Format Map output pass
-      const formattedStreams = allFetchedStreams
-      .filter((s: any) => s.type !== "embed" && s.type !== "iframe" && s.type !== "player" && !s.url?.includes("/embed/") && !s.url?.includes("/e/"))
-      .map((stream: any, index: number) => {
-        let finalUrl = stream.url;
-        let refererVal = stream.referer || "";
-        let userAgentVal = stream.userAgent || "";
-        
-        const providerId = stream.providerId || "unknown";
-        
-        // Auto-assign referers based on provider if missing
-        if (!refererVal) {
-          if (providerId === 'reanime') refererVal = 'https://reanime.to/';
-          else if (providerId === 'animepahe') refererVal = 'https://animepahe.ru/';
-          else if (providerId === 'allmanga') refererVal = 'https://allmanga.to/';
-          else if (providerId === 'anikoto') refererVal = 'https://anikototv.to/';
-          else if (providerId === 'animegg') refererVal = 'https://www.animegg.org/';
-        }
-
-        const cleanProviderName = providerId.charAt(0).toUpperCase() + providerId.slice(1);
-        
-        const baseServerName = stream.server || stream.name || cleanProviderName;
-        
-        const streamsOutput = [];
-        
-        // 1. Direct Stream (no proxy, plays directly in browser if CORS and CF permit)
-        streamsOutput.push({
-          url: stream.url,
-          originalUrl: stream.url,
-          type: stream.type || (stream.url?.toLowerCase().includes(".mp4") ? "mp4" : "hls"),
-          quality: stream.quality || "1080p",
-          server: `${baseServerName} (Direct)`,
-          referer: refererVal,
-          userAgent: userAgentVal,
-          provider: providerId,
-          translationType: stream.translationType || resolvedCategory
-        });
-
-        // 2. Proxied Stream (routes through /api/proxy to inject referers, bypassing CORS if Datacenter IP is allowed)
-        if (stream.url && !stream.url.startsWith('/') && stream.type !== "hls-redirect") {
-          let proxiedUrl = `/api/proxy?url=${encodeURIComponent(stream.url)}`;
-          if (refererVal) proxiedUrl += `&referer=${encodeURIComponent(refererVal)}`;
-          if (userAgentVal) proxiedUrl += `&userAgent=${encodeURIComponent(userAgentVal)}`;
-          
-          streamsOutput.push({
-            url: proxiedUrl,
-            originalUrl: stream.url,
-            type: stream.type || (stream.url?.toLowerCase().includes(".mp4") ? "mp4" : "hls"),
-            quality: stream.quality || "1080p",
-            server: `${baseServerName} (Proxied)`,
-            referer: refererVal,
-            userAgent: userAgentVal,
-            provider: providerId,
-            translationType: stream.translationType || resolvedCategory
-          });
-        }
-        
-        return streamsOutput;
-      }).flat();
-
       res.json({
-        streams: formattedStreams,
-        subtitles: aggregatedSubtitles,
-        intro: finalIntro || undefined,
-        outro: finalOutro || undefined
+        streams: allFetchedStreams,
+        subtitles: aggregatedSubtitles
       });
 
     } catch (err: any) {
       console.error("[Anivexa Error] Fetch streaming sources failed:", err.message);
-      res.status(500).json({
-        error: "Failed to fetch streaming sources",
-        details: err.message
-      });
+      res.status(500).json({ error: "Failed to fetch streaming sources", details: err.message });
     }
   });
 
