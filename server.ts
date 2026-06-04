@@ -223,30 +223,37 @@ app.use((req, res, next) => {
         const resultStreams: any[] = [];
         try {
           const sourceUrl = `http://217.60.252.213:4000/${m.episodeId}`;
+          console.log(`[Anivexa] Fetching streaming payload from: ${sourceUrl}`);
           const sourceRes = await fetchWithTimeout(sourceUrl, {
             headers: { "Accept": "application/json" }
           }, 15000);
 
           if (sourceRes && sourceRes.ok) {
             const resData = await sourceRes.json();
-            // Fallback map checks to support either keys layout formatting
             const rawStreams = Array.isArray(resData.sources) 
               ? resData.sources 
               : Array.isArray(resData.streams) 
                 ? resData.streams 
                 : [];
             
+            console.log(`[Anivexa] ${m.providerId} returned ${rawStreams.length} raw streams.`);
+            
             const defaultReferer = resData.headers?.Referer || resData.headers?.referer || "";
             const defaultUA = resData.headers?.["User-Agent"] || resData.headers?.["user-agent"] || "";
 
             rawStreams.forEach((stream: any) => {
-              if (stream.isActive === false) return; // Ignore streams explicitly marked inactive
+              if (stream.isActive === false && !stream.extractedUrl) return; // Ignore streams explicitly marked inactive unless they have extractedUrl
+              
+              const streamUrl = stream.extractedUrl || stream.url;
+              if (!streamUrl) return;
+
               resultStreams.push({
                 ...stream,
+                url: streamUrl,
+                type: stream.extractedType || stream.type,
                 providerId: m.providerId,
                 referer: stream.referer || defaultReferer,
                 userAgent: stream.userAgent || defaultUA,
-                // FIX: Force pass explicit translation type down to child streams loop
                 translationType: resolvedCategory 
               });
             });
@@ -325,6 +332,8 @@ app.use((req, res, next) => {
 
         const cleanProviderName = providerId.charAt(0).toUpperCase() + providerId.slice(1);
         
+        const baseServerName = stream.server || stream.name || cleanProviderName;
+        
         const streamsOutput = [];
         
         // 1. Direct Stream (no proxy, plays directly in browser if CORS and CF permit)
@@ -333,7 +342,7 @@ app.use((req, res, next) => {
           originalUrl: stream.url,
           type: stream.type || (stream.url?.toLowerCase().includes(".mp4") ? "mp4" : "hls"),
           quality: stream.quality || "1080p",
-          server: `${cleanProviderName} (Direct)`,
+          server: `${baseServerName} (Direct)`,
           referer: refererVal,
           userAgent: userAgentVal,
           provider: providerId,
@@ -351,7 +360,7 @@ app.use((req, res, next) => {
             originalUrl: stream.url,
             type: stream.type || (stream.url?.toLowerCase().includes(".mp4") ? "mp4" : "hls"),
             quality: stream.quality || "1080p",
-            server: `${cleanProviderName} (Proxied)`,
+            server: `${baseServerName} (Proxied)`,
             referer: refererVal,
             userAgent: userAgentVal,
             provider: providerId,
