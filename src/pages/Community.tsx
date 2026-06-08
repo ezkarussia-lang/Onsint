@@ -755,7 +755,7 @@ export default function Community() {
                     setIsCreateOpen(true);
                   }
                 }}
-                className="w-full p-3.5 bg-zinc-950/80 border border-zinc-805 rounded-xl flex items-center justify-between gap-3 cursor-pointer hover:bg-zinc-900/60 transition-all select-none shadow"
+                className="w-full p-3.5 bg-zinc-950/80 border border-zinc-900 rounded-xl flex items-center justify-between gap-3 cursor-pointer hover:bg-zinc-900/60 transition-all select-none shadow outline-none"
               >
                 <div className="flex items-center gap-3 flex-1">
                   {currentUser ? (

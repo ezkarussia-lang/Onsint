@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react';
 import { getTrendingAnime, getPopularAnime, AnimeMedia } from '../services/anilist';
 import { getMangaDetails } from '../services/manga';
-import { Play, Pause, Info, ChevronLeft, ChevronRight, TrendingUp, Sparkles, Loader2, Star, BookOpen, Flame, Search, ArrowRight, Music, Radio, Volume2, Disc } from 'lucide-react';
+import { Play, Pause, Info, ChevronLeft, ChevronRight, TrendingUp, Sparkles, Loader2, Star, BookOpen, Flame, Search, ArrowRight, Music, Radio, Volume2, Disc, Trophy } from 'lucide-react';
 import AnimeCard from '../components/AnimeCard';
 import { useMusic, MASTERPIECE_PLAYLIST, AnimeThemeTrack } from '../services/MusicContext';
 
@@ -16,9 +16,10 @@ interface HomeProps {
   onWatchAnime: (id: number) => void;
   onSelectManga: (id: number) => void;
   onNavigateMusic: () => void;
+  onNavigateLeaderboard: () => void;
 }
 
-export default function Home({ onSelectAnime, onViewAllTrending, onWatchAnime, onSelectManga, onNavigateMusic }: HomeProps) {
+export default function Home({ onSelectAnime, onViewAllTrending, onWatchAnime, onSelectManga, onNavigateMusic, onNavigateLeaderboard }: HomeProps) {
   const music = useMusic();
   const [trending, setTrending] = useState<AnimeMedia[]>([]);
   const [popular, setPopular] = useState<AnimeMedia[]>([]);
@@ -236,6 +237,25 @@ export default function Home({ onSelectAnime, onViewAllTrending, onWatchAnime, o
           </div>
         </div>
       )}
+      
+      {/* Leaderboard CTA */}
+      <div 
+        onClick={onNavigateLeaderboard}
+        className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-yellow-500/10 to-red-500/5 border border-yellow-500/20 rounded-2xl cursor-pointer hover:border-yellow-500/40 transition-colors group mb-2"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center">
+            <Trophy className="w-5 h-5 text-yellow-500" />
+          </div>
+          <div className="flex flex-col">
+            <h3 className="font-black text-white uppercase tracking-wider text-sm group-hover:text-yellow-400 transition-colors">Currency Leaderboard</h3>
+            <span className="text-xs text-zinc-400">See the top Otaku Coin holders globally.</span>
+          </div>
+        </div>
+        <div className="flex items-center text-xs font-bold uppercase tracking-widest text-yellow-500 gap-1 group-hover:gap-2 transition-all">
+          See All <ArrowRight className="w-4 h-4" />
+        </div>
+      </div>
 
       {/* 2. Trending Anime Row */}
       <div className="flex flex-col gap-4">
@@ -288,7 +308,7 @@ export default function Home({ onSelectAnime, onViewAllTrending, onWatchAnime, o
           <form 
             onSubmit={(e) => {
               e.preventDefault();
-              onSelectManga(0); // This just triggers switching tabs, search state is manual
+              onSelectManga(86821); // Route to Solo Leveling by default since we don't have global sync
             }} 
             className="flex items-center gap-2 max-w-sm w-full"
           >

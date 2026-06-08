@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, Shield, Sliders, Play, Trash2, Key, Globe, Layout, CheckCircle, Mail, AlertTriangle, ShieldCheck, Pencil, BookOpen, Film, Eye } from 'lucide-react';
-import { UserProfile, ANIME_AVATARS, getStoredUser, saveStoredUser, getMyList, MyListItem } from '../services/store';
+import { UserProfile, ANIME_AVATARS, getStoredUser, saveStoredUser, getMyList, MyListItem, DECORATIONS_STORE } from '../services/store';
 import { upsertDbUserProfile } from '../services/supabase';
 
 const PorscheIcon = () => (
@@ -338,6 +338,57 @@ export default function Profile({ onBack, onLogout }: ProfileProps) {
               </div>
             </div>
           )}
+
+          {/* Quick Decor Picker */}
+          <div className="p-4 bg-[#08080a] border border-yellow-500/20 rounded-xl flex flex-col gap-3">
+            <span className="text-[10px] font-black uppercase text-yellow-500 tracking-widest block font-bold border-b border-yellow-900/30 pb-2">Equip Decoration</span>
+            <div className="grid grid-cols-4 gap-3 max-h-40 overflow-y-auto w-full">
+               <button
+                  onClick={() => {
+                     const u = getStoredUser();
+                     if(u) {
+                        const next = {...u, decoration: ""};
+                        saveStoredUser(next);
+                        setUser(next);
+                        upsertDbUserProfile(next).catch(()=>{});
+                     }
+                  }}
+                  className={`relative w-12 h-12 rounded-lg border flex items-center justify-center text-[10px] font-black tracking-widest uppercase transition-all bg-zinc-900/50 hover:bg-zinc-800 ${!user?.decoration ? 'border-yellow-500 text-yellow-500' : 'border-zinc-800 text-zinc-500'}`}
+               >
+                  Clear
+               </button>
+               {(() => {
+                 let purchased: string[] = [];
+                 try {
+                   purchased = JSON.parse(localStorage.getItem(`anipr8v_purchased_decos_${user?.username.toLowerCase()}`) || "[]");
+                 } catch(e) {}
+                 const availableDecos = (DECORATIONS_STORE || []).filter(d => purchased.includes(d.id));
+                 
+                 if (availableDecos.length === 0) {
+                    return <div className="col-span-3 flex items-center justify-center text-zinc-500 text-[10px] font-bold uppercase tracking-widest text-center">No Decorations. Buy in Settings!</div>;
+                 }
+
+                 return availableDecos.map(deco => (
+                    <button
+                      key={deco.id}
+                      onClick={() => {
+                        const u = getStoredUser();
+                        if(u) {
+                           const next = {...u, decoration: deco.url};
+                           saveStoredUser(next);
+                           setUser(next);
+                           upsertDbUserProfile(next).catch(()=>{});
+                        }
+                      }}
+                      className={`relative w-12 h-12 rounded-lg border flex flex-col items-center justify-center transition-all overflow-hidden ${user?.decoration === deco.url ? 'border-yellow-500 bg-yellow-500/10' : 'border-zinc-800 hover:border-zinc-700 bg-black'}`}
+                    >
+                       <img src={deco.url} className="w-[120%] h-[120%] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 object-contain pointer-events-none" />
+                    </button>
+                 ));
+               })()}
+            </div>
+          </div>
+
         </div>
 
         {/* Center/Right Form config columns */}

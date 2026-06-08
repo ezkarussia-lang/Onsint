@@ -21,6 +21,8 @@ export interface UserProfile {
   status: 'Online' | 'Idle' | 'Do Not Disturb' | 'Invisible';
   tag: 'Otaku' | 'Kuudere' | 'Tsundere' | 'Sirsilvex';
   banner?: string;
+  coins?: number;
+  decoration?: string;
 }
 
 export interface MyListItem {
@@ -70,6 +72,15 @@ export const ANIME_STICKERS = [
   { id: 'st4', label: 'Shocked Nezuko', url: 'https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExZmlrbWtsdnU1eGdzNmhmMXlyM2N6cHR2ZXRsa3RwZmhuMXByOWJ3aiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/idUqGqR9oQePyjE0m2/giphy.gif' },
   { id: 'st5', label: 'Goku Laugh', url: 'https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExNG1sb3RnbnZhMTlhdWp3bm0weDN6dmwzNTZkaGU0ZHFlczBrbzN1MCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Yw/tH2oOpjkWzcqc/giphy.gif' },
   { id: 'st6', label: 'Sips Tea', url: 'https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExdTBmOHByMHdtNjRmdnAwYWRoZnI5cHk2NmJmODZocGR3MWw3NHpsNiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Yw/S0m5t70SgY2qI/giphy.gif' }
+];
+
+export const DECORATIONS_STORE = [
+  { id: 'dec1', label: 'Glitch', url: 'https://cdn.discordapp.com/avatar-decoration-presets/a_e90ebc0114e7bdc30353c8b11953ea41.png?size=96&passthrough=true', price: 50 },
+  { id: 'dec2', label: 'Golden Crown', url: 'https://cdn.discordapp.com/avatar-decoration-presets/a_65db91cee351e36150a2b506b26eba71.png?size=96&passthrough=true', price: 100 },
+  { id: 'dec3', label: 'Rainy Mood', url: 'https://cdn.discordapp.com/avatar-decoration-presets/a_e8c11f139e55dac538cdaafb3caa2317.png?size=96&passthrough=true', price: 50 },
+  { id: 'dec4', label: 'Cat Ears', url: 'https://cdn.discordapp.com/avatar-decoration-presets/a_c3cffc19e9784f7d0b005eecdf1b566e.png?size=96&passthrough=true', price: 150 },
+  { id: 'dec5', label: 'Shocked Anime', url: 'https://cdn.discordapp.com/avatar-decoration-presets/a_b98e8b204d59882fb7f9f7c86922c0bf.png?size=96&passthrough=true', price: 100 },
+  { id: 'dec6', label: 'Neon Star', url: 'https://raw.githubusercontent.com/phaticusthiccy/phaticusthiccy/main/youtube_animated_avatars/rotating_star.png?raw=true', price: 200 }
 ];
 
 export const CURRENT_USER_KEY = 'anipr8v_logged_user';

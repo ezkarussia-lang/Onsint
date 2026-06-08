@@ -3,18 +3,66 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState } from 'react';
-import { Settings as SettingsIcon, Shield, Sliders, Play, Trash2, CheckCircle2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Settings as SettingsIcon, Shield, Sliders, Play, Trash2, CheckCircle2, ShoppingBag, Coins } from 'lucide-react';
 import { fetchDbUserProfile, upsertDbUserProfile } from '../services/supabase';
 import { getApiUrl } from '../services/api';
+import { DECORATIONS_STORE, getStoredUser, saveStoredUser } from '../services/store';
 
-export default function Settings() {
+export default function Settings({ onNavigateStore }: { onNavigateStore?: () => void }) {
   const [autoSkipOped, setAutoSkipOped] = useState(() => localStorage.getItem('anime_auto_skip_oped') === 'true');
   const [autoplay, setAutoplay] = useState(() => localStorage.getItem('anime_autoplay') !== 'false');
   const [profilePrivate, setProfilePrivate] = useState(() => localStorage.getItem('anipr8v_hide_my_list') === 'true');
   const [hideMangaList, setHideMangaList] = useState(() => localStorage.getItem('anipr8v_hide_manga_list') === 'true');
   const [hideFavouriteSongs, setHideFavouriteSongs] = useState(() => localStorage.getItem('anipr8v_hide_favourite_songs') === 'true');
   const [historyClearedMessage, setHistoryClearedMessage] = useState(false);
+  
+  const [userCoins, setUserCoins] = useState(0);
+  const [purchasedDecos, setPurchasedDecos] = useState<string[]>([]);
+  
+  useEffect(() => {
+    const user = getStoredUser();
+    if (user) {
+      setUserCoins(user.coins || 0);
+      try {
+        const storedPurchased = localStorage.getItem(`anipr8v_purchased_decos_${user.username.toLowerCase()}`);
+        if (storedPurchased) {
+          setPurchasedDecos(JSON.parse(storedPurchased));
+        }
+      } catch (e) {}
+    }
+  }, []);
+
+  const handlePurchaseDecoration = async (deco: typeof DECORATIONS_STORE[0]) => {
+    const user = getStoredUser();
+    if (!user) {
+        alert("You must be logged in to purchase decorations!");
+        return;
+    }
+    if (purchasedDecos.includes(deco.id)) {
+        alert("You already own this decoration!");
+        return;
+    }
+    if (userCoins < deco.price) {
+        alert("Not enough Otaku Coins!");
+        return;
+    }
+    const newCoins = userCoins - deco.price;
+    setUserCoins(newCoins);
+    const newDecos = [...purchasedDecos, deco.id];
+    setPurchasedDecos(newDecos);
+    localStorage.setItem(`anipr8v_purchased_decos_${user.username.toLowerCase()}`, JSON.stringify(newDecos));
+    
+    // Auto equip if none equipped or just bought
+    const updatedUser = { ...user, coins: newCoins, decoration: deco.url };
+    saveStoredUser(updatedUser);
+    
+    try {
+        await upsertDbUserProfile(updatedUser);
+        alert(`Successfully purchased and equipped ${deco.label}!`);
+    } catch (e) {}
+  };
+
   const [pyCode, setPyCode] = useState('');
   const [tsCode, setTsCode] = useState('');
 
@@ -358,6 +406,25 @@ export default function Settings() {
               </div>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Decoration Store CTA */}
+      <div 
+        onClick={onNavigateStore}
+        className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-purple-500/10 to-transparent border border-purple-500/20 rounded-2xl cursor-pointer hover:border-purple-500/40 transition-colors mt-6 group"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center">
+            <ShoppingBag className="w-5 h-5 text-purple-500" />
+          </div>
+          <div className="flex flex-col">
+            <h3 className="font-black text-white uppercase tracking-wider text-sm group-hover:text-purple-400 transition-colors">Decoration Store</h3>
+            <span className="text-xs text-zinc-400">Spend your Otaku Coins on exclusive profile decorations.</span>
+          </div>
+        </div>
+        <div className="flex items-center text-xs font-bold uppercase tracking-widest text-purple-500 gap-1 group-hover:gap-2 transition-all">
+          Visit Store <Play className="w-3 h-3 fill-purple-500 text-purple-500" />
         </div>
       </div>
 

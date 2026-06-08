@@ -10,6 +10,8 @@ import Details from './pages/Details';
 import Watch from './pages/Watch';
 import WatchTogetherRoom from './pages/WatchTogetherRoom';
 import TrendingAll from './components/TrendingAll';
+import Leaderboard from './pages/Leaderboard';
+import Store from './pages/Store';
 import { X, Play, Bell } from 'lucide-react';
 
 // New layout sub-views
@@ -32,7 +34,9 @@ type ViewState =
   | { type: 'watch-together'; roomId: string; isOwner: boolean }
   | { type: 'trending' }
   | { type: 'profile'; username?: string }
-  | { type: 'music' };
+  | { type: 'music' }
+  | { type: 'leaderboard' }
+  | { type: 'store' };
 
 function parsePathToView(pathname: string): ViewState {
   const cleanPath = pathname.toLowerCase().replace(/^\/|\/$/g, '');
@@ -54,6 +58,12 @@ function parsePathToView(pathname: string): ViewState {
   }
   if (cleanPath === 'settings') {
     return { type: 'tab', tab: 'settings' };
+  }
+  if (cleanPath === 'leaderboard') {
+    return { type: 'leaderboard' };
+  }
+  if (cleanPath === 'store') {
+    return { type: 'store' };
   }
   if (cleanPath === 'profile') {
     return { type: 'profile' };
@@ -298,6 +308,7 @@ function AppContent() {
                 onViewAllTrending={() => navigateTo({ type: 'trending' })}
                 onSelectManga={handleSelectMangaOnPage}
                 onNavigateMusic={() => navigateTo({ type: 'music' })}
+                onNavigateLeaderboard={() => navigateTo({ type: 'leaderboard' })}
               />
             );
           case 'search':
@@ -319,7 +330,7 @@ function AppContent() {
           case 'community':
             return <Community />;
           case 'settings':
-            return <Settings />;
+            return <Settings onNavigateStore={() => navigateTo({ type: 'store' })} />;
         }
         break;
       case 'details':
@@ -360,6 +371,17 @@ function AppContent() {
           <Music
             onBack={handleBack}
           />
+        );
+      case 'leaderboard':
+        return (
+          <Leaderboard
+            onBack={handleBack}
+            onOpenProfile={(username) => navigateTo({ type: 'profile', username })}
+          />
+        );
+      case 'store':
+        return (
+          <Store onBack={handleBack} />
         );
     }
   };

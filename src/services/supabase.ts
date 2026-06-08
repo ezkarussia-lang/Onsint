@@ -658,13 +658,15 @@ export function parseBioCredentials(bio: string | null): {
   hide_manga_list?: boolean;
   hide_favourite_songs?: boolean;
 } {
-  const result = { 
+  const result: any = { 
     bio: bio || "", 
     pwd: "", 
     lastActive: 0,
     hide_my_list: false,
     hide_manga_list: false,
-    hide_favourite_songs: false
+    hide_favourite_songs: false,
+    coins: 0,
+    decoration: ''
   };
   if (!bio) return result;
   
@@ -687,6 +689,10 @@ export function parseBioCredentials(bio: string | null): {
           result.hide_manga_list = value === 'true';
         } else if (key === 'hide_favourite_songs') {
           result.hide_favourite_songs = value === 'true';
+        } else if (key === 'coins') {
+          result.coins = parseInt(value, 10) || 0;
+        } else if (key === 'decoration') {
+          result.decoration = value;
         }
       }
     });
@@ -700,14 +706,18 @@ export function buildBioWithCredentials(
   lastActive?: number,
   hide_my_list?: boolean,
   hide_manga_list?: boolean,
-  hide_favourite_songs?: boolean
+  hide_favourite_songs?: boolean,
+  coins?: number,
+  decoration?: string
 ): string {
   const pieces = [
     `pwd=${pwd || ""}`,
     `last_active=${lastActive || Date.now()}`,
     `hide_my_list=${hide_my_list ? 'true' : 'false'}`,
     `hide_manga_list=${hide_manga_list ? 'true' : 'false'}`,
-    `hide_favourite_songs=${hide_favourite_songs ? 'true' : 'false'}`
+    `hide_favourite_songs=${hide_favourite_songs ? 'true' : 'false'}`,
+    `coins=${coins || 0}`,
+    `decoration=${decoration || ""}`
   ];
   return `${cleanBio.trim()}\n\n[CREDENTIALS:${pieces.join(';')}]`.trim();
 }
@@ -726,6 +736,8 @@ export async function upsertDbUserProfile(profile: any, rawPassword?: string): P
     let finalHideList = false;
     let finalHideManga = false;
     let finalHideFavouriteSongs = false;
+    let finalCoins = profile.coins || 0;
+    let finalDecoration = profile.decoration || '';
 
     // Load presets from LocalStorage fallback if saving current user
     if (typeof window !== 'undefined') {
@@ -745,6 +757,13 @@ export async function upsertDbUserProfile(profile: any, rawPassword?: string): P
       finalHideList = parsed.hide_my_list || false;
       finalHideManga = parsed.hide_manga_list || false;
       finalHideFavouriteSongs = parsed.hide_favourite_songs || false;
+      
+      if (profile.coins === undefined && parsed.coins) {
+        finalCoins = parsed.coins;
+      }
+      if (profile.decoration === undefined && parsed.decoration) {
+        finalDecoration = parsed.decoration;
+      }
     }
 
     // Overwrite explicit fields passed in profile
@@ -758,7 +777,9 @@ export async function upsertDbUserProfile(profile: any, rawPassword?: string): P
       finalLastActive,
       finalHideList,
       finalHideManga,
-      finalHideFavouriteSongs
+      finalHideFavouriteSongs,
+      finalCoins,
+      finalDecoration
     );
 
     const { error } = await supabase
@@ -806,7 +827,9 @@ export async function fetchDbUserProfile(usernameOrEmail: string): Promise<any |
       lastActive: parsedBio.lastActive,
       hide_my_list: parsedBio.hide_my_list || false,
       hide_manga_list: parsedBio.hide_manga_list || false,
-      hide_favourite_songs: parsedBio.hide_favourite_songs || false
+      hide_favourite_songs: parsedBio.hide_favourite_songs || false,
+      coins: parsedBio.coins || 0,
+      decoration: parsedBio.decoration || ''
     };
   } catch (err) {
     return null;
@@ -856,7 +879,9 @@ export async function fetchAllDbUserProfiles(): Promise<any[]> {
         lastActive: parsedBio.lastActive,
         hide_my_list: parsedBio.hide_my_list || false,
         hide_manga_list: parsedBio.hide_manga_list || false,
-        hide_favourite_songs: parsedBio.hide_favourite_songs || false
+        hide_favourite_songs: parsedBio.hide_favourite_songs || false,
+        coins: parsedBio.coins || 0,
+        decoration: parsedBio.decoration || ''
       };
     });
   } catch (err) {
@@ -905,7 +930,9 @@ export async function fetchMultipleUserProfiles(usernames: string[]): Promise<Re
           lastActive: parsedBio.lastActive,
           hide_my_list: parsedBio.hide_my_list || false,
           hide_manga_list: parsedBio.hide_manga_list || false,
-          hide_favourite_songs: parsedBio.hide_favourite_songs || false
+          hide_favourite_songs: parsedBio.hide_favourite_songs || false,
+          coins: parsedBio.coins || 0,
+          decoration: parsedBio.decoration || ''
         };
       });
       return profilesMap;
@@ -927,7 +954,9 @@ export async function fetchMultipleUserProfiles(usernames: string[]): Promise<Re
         lastActive: parsedBio.lastActive,
         hide_my_list: parsedBio.hide_my_list || false,
         hide_manga_list: parsedBio.hide_manga_list || false,
-        hide_favourite_songs: parsedBio.hide_favourite_songs || false
+        hide_favourite_songs: parsedBio.hide_favourite_songs || false,
+        coins: parsedBio.coins || 0,
+        decoration: parsedBio.decoration || ''
       };
     });
     return profilesMap;

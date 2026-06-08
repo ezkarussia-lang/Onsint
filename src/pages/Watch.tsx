@@ -6,6 +6,8 @@
 import { useEffect, useState, useMemo } from 'react';
 import { fetchEpisodes, fetchStreamSources, resolveM3u8, AnimeEpisode, AnimeWatchResponse } from '../services/api';
 import { getAnimeDetails, AnimeMedia } from '../services/anilist';
+import { getStoredUser, saveStoredUser } from '../services/store';
+import { upsertDbUserProfile } from '../services/supabase';
 import VideoPlayer from '../components/VideoPlayer';
 import Comments from '../components/Comments';
 import { ArrowLeft, Loader2, Play, Users, AlertCircle, Sparkles, Filter, ChevronRight, ChevronLeft, ChevronDown, Tv, CornerRightDown, Grid, List } from 'lucide-react';
@@ -73,76 +75,45 @@ export default function Watch({ animeId, onBack, onSelectAnime }: WatchProps) {
         setSelectedEpisode(null);
         setStreamInfo(null);
 
-        const res = await fetchEpisodes(animeId);
-
-        if (res.providers && Object.keys(res.providers).length > 0) {
-          // Format structural keys
-          const formatted: Record<string, { sub?: AnimeEpisode[]; dub?: AnimeEpisode[] }> = {};
-          Object.entries(res.providers).forEach(([key, val]) => {
-            if (val.episodes) {
-              formatted[key] = {
-                sub: val.episodes.sub || [],
-                dub: val.episodes.dub || [],
-              };
-            }
-          });
-
-          setProviders(formatted);
-
-          // Default selection to an active provider with episodes
-          const availableProviders = Object.keys(formatted);
-          const defaultProv = availableProviders.find(p => (formatted[p].sub?.length || 0) > 0 || (formatted[p].dub?.length || 0) > 0) || availableProviders[0];
-          
-          if (defaultProv) {
-            setSelectedProvider(defaultProv);
-            const defaultCategory = (formatted[defaultProv].sub?.length || 0) > 0 ? 'sub' : 'dub';
-            setSelectedCategory(defaultCategory);
-            
-            const episodesList = formatted[defaultProv][defaultCategory] || [];
-            if (episodesList.length > 0) {
-              // Sorting episodes by number ascendingly
-              const sorted = [...episodesList].sort((a, b) => a.number - b.number);
-              setSelectedEpisode(sorted[0]);
-            }
-          }
-        } else {
-          // Empty or invalid provider response
-          throw new Error('No providers or episode lists matched this AniList ID.');
+        // Fallback episodes count
+        let totalEpisodes = animeInfo?.episodes || 12;
+        if (animeInfo?.nextAiringEpisode?.episode) {
+            totalEpisodes = Math.max(totalEpisodes, animeInfo.nextAiringEpisode.episode - 1);
         }
 
-      } catch (err: any) {
-        console.warn('Core episodes API failed. Loading custom mock episodes instead.', err);
-        setErrorEpisodes('Dynamic episodes fetch offline. No premium episodes available.');
-        
-        // Populate standard mock episodes so player is always working
+        const buildEpisodes = (category: 'sub' | 'dub') => {
+          return Array.from({ length: totalEpisodes }, (_, i) => ({
+            id: `watch/anineko/${animeId}/${category}/anineko-${i + 1}`,
+            number: i + 1,
+            title: `Episode ${i + 1}`,
+            image: animeInfo?.coverImage.large,
+            airDate: 'Recently',
+          }));
+        };
+
         const mockProv: Record<string, { sub?: AnimeEpisode[]; dub?: AnimeEpisode[] }> = {
-          'kiwi (Demo)': {
-            sub: Array.from({ length: 12 }, (_, i) => ({
-              id: `demo-sub-${i + 1}`,
-              number: i + 1,
-              title: `Episode ${i + 1}`,
-              image: animeInfo?.coverImage.large,
-              airDate: '2026-05-22',
-            })),
-            dub: Array.from({ length: 12 }, (_, i) => ({
-              id: `demo-dub-${i + 1}`,
-              number: i + 1,
-              title: `Episode ${i + 1}`,
-              image: animeInfo?.coverImage.large,
-              airDate: '2026-05-22',
-            })),
+          'Auto (anineko/anidbapp)': {
+            sub: buildEpisodes('sub'),
+            dub: buildEpisodes('dub'),
           }
         };
+
         setProviders(mockProv);
-        setSelectedProvider('kiwi (Demo)');
+        setSelectedProvider('Auto (anineko/anidbapp)');
         setSelectedCategory('sub');
-        setSelectedEpisode(mockProv['kiwi (Demo)'].sub![0]);
+        setSelectedEpisode(mockProv['Auto (anineko/anidbapp)'].sub![0]);
+        
+      } catch (err: any) {
+        console.warn('Failed to load standard mock episodes.', err);
+        setErrorEpisodes('Unable to load standard episodes.');
       } finally {
         setLoadingEpisodes(false);
       }
     }
 
-    loadEpisodes();
+    if (animeInfo) {
+      loadEpisodes();
+    }
   }, [animeId, animeInfo]);
 
   // Load stream sources for selected episode
@@ -628,6 +599,14 @@ export default function Watch({ animeId, onBack, onSelectAnime }: WatchProps) {
                 intro={streamInfo?.intro}
                 outro={streamInfo?.outro}
                 onEpisodeEnd={() => {
+                  const currentUser = getStoredUser();
+                  if (currentUser) {
+                    const newCoins = (currentUser.coins || 0) + 10;
+                    const updated = { ...currentUser, coins: newCoins };
+                    saveStoredUser(updated);
+                    upsertDbUserProfile(updated).catch(() => {});
+                  }
+
                   const autoplayEnabled = localStorage.getItem('anime_autoplay') !== 'false';
                   if (!autoplayEnabled) return;
                   const nextEpNum = (selectedEpisode?.number || 0) + 1;
