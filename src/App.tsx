@@ -3,6 +3,7 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import BottomNav, { TabType } from './components/BottomNav';
 import Home from './pages/Home';
+import Discover from './pages/Discover';
 import Search from './pages/Search';
 import Community from './pages/Community';
 import Settings from './pages/Settings';
@@ -12,6 +13,7 @@ import WatchTogetherRoom from './pages/WatchTogetherRoom';
 import TrendingAll from './components/TrendingAll';
 import Leaderboard from './pages/Leaderboard';
 import Store from './pages/Store';
+import LegalDoc from './pages/LegalDoc';
 import { X, Play, Bell } from 'lucide-react';
 
 // New layout sub-views
@@ -31,11 +33,13 @@ type ViewState =
   | { type: 'tab'; tab: TabType }
   | { type: 'details'; animeId: number }
   | { type: 'watch'; animeId: number }
+  | { type: 'manga'; mangaId?: number }
   | { type: 'watch-together'; roomId: string; isOwner: boolean }
   | { type: 'trending' }
   | { type: 'profile'; username?: string }
   | { type: 'music' }
   | { type: 'leaderboard' }
+  | { type: 'legal'; doc: 'tos' | 'privacy' | 'dmca' }
   | { type: 'store' };
 
 function parsePathToView(pathname: string): ViewState {
@@ -44,11 +48,18 @@ function parsePathToView(pathname: string): ViewState {
   if (!cleanPath || cleanPath === 'home') {
     return { type: 'tab', tab: 'home' };
   }
+  if (cleanPath === 'discover') {
+    return { type: 'tab', tab: 'discover' };
+  }
+  if (cleanPath.startsWith('manga')) {
+    const parts = cleanPath.split('/');
+    if (parts.length > 1) {
+      return { type: 'manga', mangaId: parseInt(parts[1], 10) };
+    }
+    return { type: 'manga' };
+  }
   if (cleanPath === 'search') {
     return { type: 'tab', tab: 'search' };
-  }
-  if (cleanPath === 'manga') {
-    return { type: 'tab', tab: 'manga' };
   }
   if (cleanPath === 'mylist') {
     return { type: 'tab', tab: 'mylist' };
@@ -64,6 +75,15 @@ function parsePathToView(pathname: string): ViewState {
   }
   if (cleanPath === 'store') {
     return { type: 'store' };
+  }
+  if (cleanPath === 'tos') {
+    return { type: 'legal', doc: 'tos' };
+  }
+  if (cleanPath === 'privacy') {
+    return { type: 'legal', doc: 'privacy' };
+  }
+  if (cleanPath === 'dmca') {
+    return { type: 'legal', doc: 'dmca' };
   }
   if (cleanPath === 'profile') {
     return { type: 'profile' };
@@ -107,12 +127,16 @@ function viewToPath(view: ViewState): string {
   switch (view.type) {
     case 'tab':
       return view.tab === 'home' ? '/' : `/${view.tab}`;
+    case 'manga':
+      return view.mangaId ? `/manga/${view.mangaId}` : '/manga';
     case 'profile':
       return view.username ? `/profile/${view.username}` : '/profile';
     case 'music':
       return '/music';
     case 'trending':
       return '/trending';
+    case 'legal':
+      return `/${view.doc}`;
     case 'details':
       return `/details/${view.animeId}`;
     case 'watch':
@@ -245,7 +269,7 @@ function AppContent() {
 
   const handleSelectMangaOnPage = (mangaId: number) => {
     setMangaRouteId(mangaId);
-    handleChangeTab('manga');
+    navigateTo({ type: 'manga', mangaId });
   };
 
   // Navigate to a new view while logging position into history
@@ -273,9 +297,7 @@ function AppContent() {
   };
 
   const handleChangeTab = (tab: TabType) => {
-    if (tab !== 'manga') {
-      setMangaRouteId(null);
-    }
+    setMangaRouteId(null);
     setActiveTab(tab);
     setHistory([]);
     setCurrentView({ type: 'tab', tab });
@@ -303,6 +325,14 @@ function AppContent() {
           case 'home':
             return (
               <Home
+                onSelectManga={handleSelectMangaOnPage}
+                onNavigateMusic={() => navigateTo({ type: 'music' })}
+                onNavigateLeaderboard={() => navigateTo({ type: 'leaderboard' })}
+              />
+            );
+          case 'discover':
+            return (
+              <Discover
                 onSelectAnime={(id) => navigateTo({ type: 'details', animeId: id })}
                 onWatchAnime={(id) => navigateTo({ type: 'watch', animeId: id })}
                 onViewAllTrending={() => navigateTo({ type: 'trending' })}
@@ -313,13 +343,6 @@ function AppContent() {
             );
           case 'search':
             return <Search onSelectAnime={(id) => navigateTo({ type: 'details', animeId: id })} />;
-          case 'manga':
-            return (
-              <Manga
-                onBackToHome={() => handleChangeTab('home')}
-                initialMangaId={mangaRouteId}
-              />
-            );
           case 'mylist':
             return (
               <MyList 
@@ -333,6 +356,13 @@ function AppContent() {
             return <Settings onNavigateStore={() => navigateTo({ type: 'store' })} />;
         }
         break;
+      case 'manga':
+        return (
+          <Manga
+            onBackToHome={() => navigateTo({ type: 'tab', tab: 'home' })}
+            initialMangaId={currentView.mangaId || mangaRouteId}
+          />
+        );
       case 'details':
         return (
           <Details
@@ -383,6 +413,13 @@ function AppContent() {
         return (
           <Store onBack={handleBack} />
         );
+      case 'legal':
+        return (
+          <LegalDoc 
+            docType={currentView.doc} 
+            onBack={handleBack} 
+          />
+        );
     }
   };
 
@@ -403,7 +440,7 @@ function AppContent() {
       />
 
       {/* Main core pages render panel */}
-      <main className="flex-grow pt-6">
+      <main className="flex-grow">
         {renderContent()}
       </main>
 

@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Home, Search, Users, Settings as SettingsIcon, BookOpen, Bookmark, User } from 'lucide-react';
+import { Home, Search, Users, Settings as SettingsIcon, BookOpen, Bookmark, User, Compass } from 'lucide-react';
 import { UserProfile } from '../services/store';
 
-export type TabType = 'home' | 'search' | 'mylist' | 'community' | 'settings' | 'manga' | 'music';
+export type TabType = 'home' | 'discover' | 'search' | 'mylist' | 'community' | 'settings' | 'music';
 
 interface BottomNavProps {
   activeTab: TabType;
@@ -26,8 +26,8 @@ export default function BottomNav({
   
   const tabs = [
     { id: 'home' as TabType, label: 'Home', icon: Home },
+    { id: 'discover' as TabType, label: 'Discover', icon: Compass },
     { id: 'search' as TabType, label: 'Search', icon: Search },
-    { id: 'manga' as TabType, label: 'Manga', icon: BookOpen },
     { id: 'mylist' as TabType, label: 'My List', icon: Bookmark },
     { id: 'community' as TabType, label: 'Community', icon: Users },
     { id: 'settings' as TabType, label: 'Settings', icon: SettingsIcon },

@@ -75,12 +75,26 @@ export const ANIME_STICKERS = [
 ];
 
 export const DECORATIONS_STORE = [
-  { id: 'dec1', label: 'Glitch', url: 'https://cdn.discordapp.com/avatar-decoration-presets/a_e90ebc0114e7bdc30353c8b11953ea41.png?size=96&passthrough=true', price: 50 },
+  { id: 'dec1', label: 'Glitch Effect', url: 'https://cdn.discordapp.com/avatar-decoration-presets/a_e90ebc0114e7bdc30353c8b11953ea41.png?size=96&passthrough=true', price: 50 },
   { id: 'dec2', label: 'Golden Crown', url: 'https://cdn.discordapp.com/avatar-decoration-presets/a_65db91cee351e36150a2b506b26eba71.png?size=96&passthrough=true', price: 100 },
-  { id: 'dec3', label: 'Rainy Mood', url: 'https://cdn.discordapp.com/avatar-decoration-presets/a_e8c11f139e55dac538cdaafb3caa2317.png?size=96&passthrough=true', price: 50 },
-  { id: 'dec4', label: 'Cat Ears', url: 'https://cdn.discordapp.com/avatar-decoration-presets/a_c3cffc19e9784f7d0b005eecdf1b566e.png?size=96&passthrough=true', price: 150 },
+  { id: 'dec3', label: 'Rainy Mood', url: 'https://cdn.discordapp.com/avatar-decoration-presets/a_e8c11f139e55dac538cdaafb3caa2317.png?size=96&passthrough=true', price: 75 },
+  { id: 'dec4', label: 'Cat Ears', url: 'https://cdn.discordapp.com/avatar-decoration-presets/a_bb87aa9aeaf3eab7a2283bf387ab83c7.png?size=96&passthrough=true', price: 150 },
   { id: 'dec5', label: 'Shocked Anime', url: 'https://cdn.discordapp.com/avatar-decoration-presets/a_b98e8b204d59882fb7f9f7c86922c0bf.png?size=96&passthrough=true', price: 100 },
-  { id: 'dec6', label: 'Neon Star', url: 'https://raw.githubusercontent.com/phaticusthiccy/phaticusthiccy/main/youtube_animated_avatars/rotating_star.png?raw=true', price: 200 }
+  { id: 'dec6', label: 'Black Hole', url: 'https://cdn.discordapp.com/avatar-decoration-presets/a_e93ff7bf09ae0de6ba038031eabe58f2.png?size=96&passthrough=true', price: 200 },
+  { id: 'dec7', label: 'Galactic Spin', url: 'https://cdn.discordapp.com/avatar-decoration-presets/a_5ca2dca843a90623ce1dbe726477ab99.png?size=96&passthrough=true', price: 120 },
+  { id: 'dec8', label: 'Magic Circle', url: 'https://cdn.discordapp.com/avatar-decoration-presets/a_9af2423a8542cd504ecdbf56ce2ee47f.png?size=96&passthrough=true', price: 150 },
+  { id: 'dec9', label: 'Cyberpunk Frame', url: 'https://cdn.discordapp.com/avatar-decoration-presets/a_3c2d6fe0e7e40a0fd8b9b422cfbf71e1.png?size=96&passthrough=true', price: 180 },
+  { id: 'dec10', label: 'Pixel Hearts', url: 'https://cdn.discordapp.com/avatar-decoration-presets/a_5bf968435d8e7c10b777a94efdbdc7ab.png?size=96&passthrough=true', price: 130 },
+  { id: 'dec11', label: 'Dark Magic', url: 'https://cdn.discordapp.com/avatar-decoration-presets/a_facc527a26fcdbedb07b1d6cdb71db3a.png?size=96&passthrough=true', price: 150 },
+  { id: 'dec12', label: 'Lightning Strike', url: 'https://cdn.discordapp.com/avatar-decoration-presets/a_b9e7c4fca759fcaf02b4fc3487c536bb.png?size=96&passthrough=true', price: 140 },
+  { id: 'dec13', label: 'Frost Aura', url: 'https://cdn.discordapp.com/avatar-decoration-presets/a_c7ff30ca5d03ed82e854d90961ae01a9.png?size=96&passthrough=true', price: 120 },
+  { id: 'dec14', label: 'Flower Wreath', url: 'https://cdn.discordapp.com/avatar-decoration-presets/a_8c30cdd09d43521633cf4c7e63b156f7.png?size=96&passthrough=true', price: 90 },
+  { id: 'dec15', label: 'Demon Horns', url: 'https://cdn.discordapp.com/avatar-decoration-presets/a_c3cffc19e9784f7d0b005eecdf1b566e.png?size=96&passthrough=true', price: 150 },
+  { id: 'dec16', label: 'Radiant Halo', url: 'https://cdn.discordapp.com/avatar-decoration-presets/a_871fcabe059e66fdac193561a15cdbdf.png?size=96&passthrough=true', price: 175 },
+  { id: 'dec17', label: 'Sakura Petals', url: 'https://cdn.discordapp.com/avatar-decoration-presets/a_43ea92e5aa6dff6d318ffea9ae2b2ac1.png?size=96&passthrough=true', price: 200 },
+  { id: 'dec18', label: 'Neon Cyber', url: 'https://cdn.discordapp.com/avatar-decoration-presets/a_94e5aebd771ea74d30e4b857ef51a7b4.png?size=96&passthrough=true', price: 160 },
+  { id: 'dec19', label: 'Card Suits', url: 'https://cdn.discordapp.com/avatar-decoration-presets/a_eddc8992e5b74cbf5e7af4aa89cce0d2.png?size=96&passthrough=true', price: 120 },
+  { id: 'dec20', label: 'Retro Wave', url: 'https://cdn.discordapp.com/avatar-decoration-presets/a_2b5d4bc6287cd52d8e41bf1b4ce63b46.png?size=96&passthrough=true', price: 130 }
 ];
 
 export const CURRENT_USER_KEY = 'anipr8v_logged_user';

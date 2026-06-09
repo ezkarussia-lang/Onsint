@@ -657,6 +657,8 @@ export function parseBioCredentials(bio: string | null): {
   hide_my_list?: boolean;
   hide_manga_list?: boolean;
   hide_favourite_songs?: boolean;
+  coins?: number;
+  decoration?: string;
 } {
   const result: any = { 
     bio: bio || "", 
