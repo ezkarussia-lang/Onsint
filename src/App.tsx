@@ -22,6 +22,7 @@ import Profile from './pages/Profile';
 import PublicProfile from './pages/PublicProfile';
 import MyList from './pages/MyList';
 import Manga from './pages/Manga';
+import Landing from './pages/Landing';
 import { getStoredUser, UserProfile, saveStoredUser, syncMyListWithDb, simulateNewEpisodeReleases } from './services/store';
 import AuthModal from './components/AuthModal';
 import { MusicProvider } from './services/MusicContext';
@@ -31,6 +32,7 @@ import Music from './pages/Music';
 import { upsertDbUserProfile } from './services/supabase';
 
 type ViewState =
+  | { type: 'landing' }
   | { type: 'tab'; tab: TabType }
   | { type: 'details'; animeId: number }
   | { type: 'watch'; animeId: number }
@@ -47,7 +49,10 @@ type ViewState =
 function parsePathToView(pathname: string): ViewState {
   const cleanPath = pathname.toLowerCase().replace(/^\/|\/$/g, '');
   
-  if (!cleanPath || cleanPath === 'home') {
+  if (!cleanPath) {
+    return { type: 'landing' };
+  }
+  if (cleanPath === 'home') {
     return { type: 'tab', tab: 'home' };
   }
   if (cleanPath === 'discover') {
@@ -130,8 +135,10 @@ function parsePathToView(pathname: string): ViewState {
 
 function viewToPath(view: ViewState): string {
   switch (view.type) {
+    case 'landing':
+      return '/';
     case 'tab':
-      return view.tab === 'home' ? '/' : `/${view.tab}`;
+      return `/${view.tab}`;
     case 'manga':
       return view.mangaId ? `/manga/${view.mangaId}` : '/manga';
     case 'profile':
@@ -434,6 +441,25 @@ function AppContent() {
         );
     }
   };
+
+  const isLanding = currentView.type === 'landing';
+
+  if (isLanding) {
+    return (
+      <div className="min-h-screen bg-[#040405] text-[#f4f4f5] font-sans">
+        <Landing 
+          onGetStarted={() => navigateTo({ type: 'tab', tab: 'home' })} 
+          onBrowseAnimes={() => navigateTo({ type: 'tab', tab: 'discover' })}
+          onSearchAnime={(id) => navigateTo({ type: 'details', animeId: id })}
+        />
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          onSuccess={handleAuthSuccess}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen max-w-full overflow-x-hidden bg-[#040405] text-[#f4f4f5] flex flex-col font-sans md:pl-20 lg:pl-20">

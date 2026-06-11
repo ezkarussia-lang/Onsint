@@ -57,8 +57,8 @@ export default function AnimeCard({ media, onClick }: AnimeCardProps) {
       {/* 1. Cover Image wrapper with premium rounded corners and red hover highlights */}
       <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-zinc-950 border border-zinc-900/80 hover:border-red-500/40 shadow-md hover:shadow-red-650/5 transition-all duration-500 select-none">
         <img
-          src={media.coverImage.extraLarge || media.coverImage.large}
-          alt={media.title.userPreferred || 'Anime Cover'}
+          src={media.coverImage?.extraLarge || media.coverImage?.large || media.bannerImage || ""}
+          alt={media.title?.userPreferred || media.title?.english || 'Anime Cover'}
           className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
           loading="lazy"
           referrerPolicy="no-referrer"
@@ -100,7 +100,7 @@ export default function AnimeCard({ media, onClick }: AnimeCardProps) {
       <div className="pt-3 pb-1 flex flex-col gap-0.5 select-none text-left">
         {/* Title */}
         <h3 className="text-[12.5px] font-black text-white group-hover:text-red-500 transition-colors tracking-tight line-clamp-2 leading-snug">
-          {media.title.english || media.title.userPreferred || media.title.romaji}
+          {media.title?.english || media.title?.userPreferred || media.title?.romaji || 'Unknown Title'}
         </h3>
 
         {/* Subtitle description (TV · 25 m style format) */}
