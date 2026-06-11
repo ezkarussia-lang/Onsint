@@ -97,7 +97,6 @@ const CATEGORIES_DATA = [
   { name: 'News', label: 'News', rawName: 'Announcements' },
   { name: 'Recommendations', label: 'Recommendations', rawName: 'Recommendations' },
   { name: 'Art_Media', label: 'Art & Media', rawName: 'Art_Media' },
-  { name: 'Discussion', label: 'Discussion', rawName: 'Discussion' },
   { name: 'Help_Support', label: 'Help & Support', rawName: 'Help_Support' }
 ];
 
@@ -173,7 +172,6 @@ export default function Community() {
       News: 0,
       Recommendations: 0,
       Art_Media: 0,
-      Discussion: 0,
       Help_Support: 0,
     };
 
@@ -557,10 +555,14 @@ export default function Community() {
                 <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#ef4444]/60 to-transparent" />
 
                 <div className="flex flex-wrap items-center gap-2 mb-1">
-                  <span className="text-[10px] font-black font-mono uppercase bg-zinc-900 text-[#ef4444] border border-zinc-800 px-3 py-1 rounded-full tracking-widest leading-none">
-                    {activeViewThread.category === 'Discussions' ? 'GENERAL' : activeViewThread.category.toUpperCase()}
-                  </span>
-                  <span className="text-zinc-800 text-[10px]">•</span>
+                  {activeViewThread.category !== 'Discussion' && (
+                    <>
+                      <span className="text-[10px] font-black font-mono uppercase bg-zinc-900 text-[#ef4444] border border-zinc-800 px-3 py-1 rounded-full tracking-widest leading-none">
+                        {activeViewThread.category === 'Discussions' ? 'GENERAL' : activeViewThread.category.toUpperCase()}
+                      </span>
+                      <span className="text-zinc-800 text-[10px]">•</span>
+                    </>
+                  )}
                   <span className="text-[10px] text-zinc-500 font-bold flex items-center gap-1 font-mono">
                     <Clock className="w-3 h-3 text-zinc-500" />
                     {timeAgo(activeViewThread.created_at)}
@@ -701,9 +703,11 @@ export default function Community() {
                     >
                       <div>
                         <div className="flex items-center justify-between gap-2 mb-2 select-none">
-                          <span className="text-[8px] font-black font-mono uppercase bg-zinc-900 text-zinc-400 border border-zinc-805 px-2.5 py-0.5 rounded-md tracking-wider leading-none">
-                            {thread.category === 'Discussions' ? 'GENERAL' : thread.category.toUpperCase()}
-                          </span>
+                          {thread.category !== 'Discussion' ? (
+                            <span className="text-[8px] font-black font-mono uppercase bg-zinc-900 text-zinc-400 border border-zinc-805 px-2.5 py-0.5 rounded-md tracking-wider leading-none">
+                              {thread.category === 'Discussions' ? 'GENERAL' : thread.category.toUpperCase()}
+                            </span>
+                          ) : <div />}
                           {isAdmin && (
                             <button
                               onClick={(e) => {
@@ -1064,10 +1068,14 @@ export default function Community() {
                               </span>
                             )}
                             
-                            <span className="text-[8px] font-black font-mono uppercase bg-[#18181c] border border-zinc-820 px-2.5 py-0.5 rounded-full text-zinc-400">
-                              {thread.category === 'Discussions' ? 'GENERAL' : thread.category.toUpperCase()}
-                            </span>
-                            <span className="text-zinc-805 font-mono">•</span>
+                            {thread.category !== 'Discussion' && (
+                              <>
+                                <span className="text-[8px] font-black font-mono uppercase bg-[#18181c] border border-zinc-820 px-2.5 py-0.5 rounded-full text-zinc-400">
+                                  {thread.category === 'Discussions' ? 'GENERAL' : thread.category.toUpperCase()}
+                                </span>
+                                <span className="text-zinc-805 font-mono">•</span>
+                              </>
+                            )}
                             <span className="font-medium font-mono text-[10px] text-zinc-500">
                               {timeAgo(thread.created_at)}
                             </span>

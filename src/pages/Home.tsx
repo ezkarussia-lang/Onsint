@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trophy, ArrowRight, BookOpen, Flame, Music, Disc, Radio, RefreshCw, Bookmark } from 'lucide-react';
+import { Trophy, ArrowRight, BookOpen, Flame, Music, Disc, Radio, RefreshCw, Bookmark, Newspaper, ChevronRight, Star } from 'lucide-react';
 import { getMangaDetails } from '../services/manga';
 import { AnimeMedia } from '../services/anilist';
 
@@ -7,10 +7,12 @@ interface HomeProps {
   onSelectManga: (id: number) => void;
   onNavigateMusic: () => void;
   onNavigateLeaderboard: () => void;
+  onNavigateAnimeNews: () => void;
 }
 
-export default function Home({ onSelectManga, onNavigateMusic, onNavigateLeaderboard }: HomeProps) {
+export default function Home({ onSelectManga, onNavigateMusic, onNavigateLeaderboard, onNavigateAnimeNews }: HomeProps) {
   const [popularManga, setPopularManga] = useState<any[]>([]);
+  const [news, setNews] = useState<any[]>([]);
 
   useEffect(() => {
     async function loadManga() {
@@ -34,12 +36,80 @@ export default function Home({ onSelectManga, onNavigateMusic, onNavigateLeaderb
       if (items.length > 0) setPopularManga(items);
     }
     loadManga();
+
+    async function loadNews() {
+      try {
+        const res = await fetch('https://aninews.vercel.app/api/news?limit=5');
+        const json = await res.json();
+        if (json.success && json.data) {
+          setNews(json.data);
+        }
+      } catch (e) {}
+    }
+    loadNews();
   }, []);
 
   return (
     <div className="w-full pb-24 md:pb-8 pt-4 px-4 flex flex-col gap-6 max-w-7xl mx-auto animate-fade-in relative z-10">
       <div className="flex flex-col gap-1 max-w-4xl mx-auto w-full">
         <h1 className="text-3xl font-black text-white px-2">Welcome</h1>
+      </div>
+
+      {/* Anime News Widget */}
+      <div className="w-full bg-[#070709] rounded-3xl p-6 md:p-8 border border-zinc-900 flex flex-col gap-6 max-w-4xl mx-auto mb-2 relative">
+        <div 
+          onClick={onNavigateAnimeNews}
+          className="flex items-center gap-3 cursor-pointer group w-fit"
+        >
+          <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center border border-red-500/20">
+            <Newspaper className="w-4 h-4 text-red-500" />
+          </div>
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-black text-white group-hover:text-red-500 transition-colors">Anime News</h2>
+            <ChevronRight className="w-5 h-5 text-zinc-500 group-hover:text-red-500 transition-colors" />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          {news.length > 0 && (
+            <>
+              <div className="w-full h-48 md:h-64 rounded-2xl overflow-hidden relative cursor-pointer group border border-zinc-800" onClick={onNavigateAnimeNews}>
+                {news[0].image ? (
+                  <img src={news[0].image} alt="Featured News" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                ) : (
+                  <div className="w-full h-full bg-zinc-900 group-hover:scale-105 transition-transform duration-500" />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+                <div className="absolute bottom-4 left-4 right-4 flex flex-col gap-2">
+                  <div className="flex items-center gap-1.5 text-red-500">
+                    <Star className="w-4 h-4 fill-current" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Featured</span>
+                  </div>
+                  <h3 className="text-lg md:text-xl font-bold text-white leading-snug">{news[0].title}</h3>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4" onClick={onNavigateAnimeNews}>
+                {news.slice(1, 5).map((article, i) => (
+                  <div key={i} className="aspect-[3/2] rounded-xl overflow-hidden relative group cursor-pointer border border-zinc-800">
+                    {article.image ? (
+                      <img src={article.image} alt="News" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    ) : (
+                      <div className="w-full h-full bg-zinc-900 flex items-center justify-center">
+                        <Newspaper className="w-8 h-8 text-zinc-800" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+          {news.length === 0 && (
+            <div className="text-zinc-500 text-sm font-semibold flex items-center justify-center py-12">
+              Loading latest news...
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Quote Widget */}

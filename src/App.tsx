@@ -12,6 +12,7 @@ import Watch from './pages/Watch';
 import WatchTogetherRoom from './pages/WatchTogetherRoom';
 import TrendingAll from './components/TrendingAll';
 import Leaderboard from './pages/Leaderboard';
+import AnimeNews from './pages/AnimeNews';
 import Store from './pages/Store';
 import LegalDoc from './pages/LegalDoc';
 import { X, Play, Bell } from 'lucide-react';
@@ -39,6 +40,7 @@ type ViewState =
   | { type: 'profile'; username?: string }
   | { type: 'music' }
   | { type: 'leaderboard' }
+  | { type: 'animenews' }
   | { type: 'legal'; doc: 'tos' | 'privacy' | 'dmca' }
   | { type: 'store' };
 
@@ -72,6 +74,9 @@ function parsePathToView(pathname: string): ViewState {
   }
   if (cleanPath === 'leaderboard') {
     return { type: 'leaderboard' };
+  }
+  if (cleanPath === 'animenews') {
+    return { type: 'animenews' };
   }
   if (cleanPath === 'store') {
     return { type: 'store' };
@@ -133,6 +138,8 @@ function viewToPath(view: ViewState): string {
       return view.username ? `/profile/${view.username}` : '/profile';
     case 'music':
       return '/music';
+    case 'animenews':
+      return '/animenews';
     case 'trending':
       return '/trending';
     case 'legal':
@@ -328,6 +335,7 @@ function AppContent() {
                 onSelectManga={handleSelectMangaOnPage}
                 onNavigateMusic={() => navigateTo({ type: 'music' })}
                 onNavigateLeaderboard={() => navigateTo({ type: 'leaderboard' })}
+                onNavigateAnimeNews={() => navigateTo({ type: 'animenews' })}
               />
             );
           case 'discover':
@@ -408,6 +416,10 @@ function AppContent() {
             onBack={handleBack}
             onOpenProfile={(username) => navigateTo({ type: 'profile', username })}
           />
+        );
+      case 'animenews':
+        return (
+          <AnimeNews onBack={handleBack} />
         );
       case 'store':
         return (
